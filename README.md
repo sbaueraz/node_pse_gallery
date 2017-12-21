@@ -1,6 +1,7 @@
 # node_cbr
 
 A web server for browsing and viewing the contents of an Adobe Photoshop Organizer Database.
+This project is not associatged with Adobe in any way.
 
 ## Setup
 
