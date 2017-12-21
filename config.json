@@ -1,0 +1,8 @@
+{
+	"database_file": "C:\\Users\\scott\\AppData\\Roaming\\Adobe\\Elements Organizer\\Catalogs\\catalog\\catalog.pse16db",
+	"filename_replace": [
+		{"replace":"C:","with":"D:"},
+		{"replace":"D:","with":"d:"},
+		{"replace":"c:","with":"d:"}
+	]
+}
