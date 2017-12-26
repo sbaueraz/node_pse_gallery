@@ -133,7 +133,6 @@ router.get('/thumbnail', function(req, res) {
             else
                 fileName = rows[0].full_filepath;
 
-            console.log("Loading thumbnail:",params,fileName);      
             returnResizedFile(fileName,req.query.scale,res);      
         }
         else {
