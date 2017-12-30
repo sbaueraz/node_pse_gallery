@@ -8,7 +8,8 @@ var fs = require('fs')
 var sharp = require("sharp");
 
 var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database(config.database_file);
+var db = null;
+var lastDBAccess = 0;
 
 var extExtract = /(?:\.([^.]+))?$/;
 
@@ -22,8 +23,21 @@ app.listen(3000);
 // all of our routes will be prefixed with /api
 app.use('/api', router);
 
+// Close the DB after 5 minutes of inactivity
+setInterval(function() {
+    if (db) {
+        let now = new Date();
+
+        if (now - lastDBAccess > 5 * 60 * 1000) {
+            console.log("Closing connection to database ",config.database_file);
+            db.close();
+            db = null;
+        }
+    }
+},60 * 1 * 1000); // Every minute
+
 router.get('/getcategories', function(req, res) {
-    db.all("select distinct e.name as parent, c.name as name, c.id " +
+    getDB().all("select distinct e.name as parent, c.name as name, c.id " +
             "from tag_table c, tag_to_media_table d, tag_table e " +
             "where c.id = d.tag_id and e.id = c.parent_id and c.can_have_children = 0 and " + 
             "c.can_tag_media = 1 and e.name not in " + 
@@ -66,7 +80,7 @@ router.get('/findpictures', function(req, res) {
             "having count(*) = " + tagCnt + ") " +
         "order by a.search_date_begin desc, b.name";
 
-    db.all(sql, function(err, rows) {
+    getDB().all(sql, function(err, rows) {
         let data = {};
         if (err) {
             console.log("findpictures SQL error:", err)
@@ -99,7 +113,7 @@ router.get('/image', function(req, res) {
     let params = [];
     params.push(req.query.picture);
 
-    db.all("select a.full_filepath, b.drive_path_if_builtin from media_table a, volume_table b where a.id=? and a.volume_id=b.id", params, function(err, rows) {
+    getDB().all("select a.full_filepath, b.drive_path_if_builtin from media_table a, volume_table b where a.id=? and a.volume_id=b.id", params, function(err, rows) {
         if (err)
             console.log("/image sql error:", err)
         if (rows && rows.length) {
@@ -109,7 +123,6 @@ router.get('/image', function(req, res) {
             else
                 fileName = rows[0].full_filepath;
 
-            console.log("Loading picture:",params,fileName);      
             returnFile(fileName,res);      
         }
         else {
@@ -123,7 +136,7 @@ router.get('/thumbnail', function(req, res) {
     let params = [];
     params.push(req.query.picture);
 
-    db.all("select a.full_filepath, b.drive_path_if_builtin from media_table a, volume_table b where a.id=? and a.volume_id=b.id", params, function(err, rows) {
+    getDB().all("select a.full_filepath, b.drive_path_if_builtin from media_table a, volume_table b where a.id=? and a.volume_id=b.id", params, function(err, rows) {
         if (err)
             console.log("/thumbnail sql error:", err)
         if (rows && rows.length) {
@@ -175,6 +188,16 @@ function returnResizedFile(image, scale, res) {
             res.end(data); // Send the file data to the browser.
         }
     });
+}
+
+function getDB() {
+    if (!db) {
+        console.log("Creating connection to database ",config.database_file);
+        db = new sqlite3.Database(config.database_file);
+    }
+
+    lastDBAccess = new Date();
+    return db;
 }
 
 function fileNameFilter(filename) {
