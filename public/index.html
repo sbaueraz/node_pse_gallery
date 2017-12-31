@@ -44,6 +44,7 @@
 
 <SCRIPT language="JavaScript">
 var currentTags = "";
+var loadingTimer = 0;
 
 console.logCopy = console.log.bind(console);
 
@@ -116,15 +117,13 @@ function AddImages(Images, idx) {
    enableZoom();
 
    if (i < returnedPhotos) {
-      setTimeout(function(){AddImages(Images,i);}, 300);
+      loadingTimer = setTimeout(function(){AddImages(Images,i);}, 300);
    }
    else
       console.log("Finished building image HTML",i);
 }
 
 function loadPics(tags) {
-   var imageHTML = "";
-
    currentTags = tags;
 
    $("#imageDiv").masonry({itemSelector: '.picDiv', columnWidth:100});
@@ -187,6 +186,9 @@ function changeTag() {
    $("#imageDiv").removeAttr("style");
    $("#imageDiv").height(0);
    $("#container").scrollTop();
+
+   if (loadingTimer)
+      clearTimeout(loadingTimer);
 
    if (Str)
       loadPics(Str);
