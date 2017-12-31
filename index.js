@@ -23,6 +23,39 @@ app.listen(3000);
 // all of our routes will be prefixed with /api
 app.use('/api', router);
 
+console.logCopy = console.log.bind(console);
+
+console.log = function()
+{
+    // Timestamp to prepend
+    var timestamp = new Date().toJSON();
+
+    if (arguments.length)
+    {
+        // True array copy so we can call .splice()
+        var args = Array.prototype.slice.call(arguments, 0);
+
+        // If there is a format string then... it must
+        // be a string
+        if (typeof arguments[0] === "string")
+        {
+            // Prepend timestamp to the (possibly format) string
+            args[0] = "%o: " + arguments[0];
+
+            // Insert the timestamp where it has to be
+            args.splice(1, 0, timestamp);
+
+            // Log the whole array
+            this.logCopy.apply(this, args);
+        }
+        else
+        { 
+            // "Normal" log
+            this.logCopy(timestamp, args);
+        }
+    }
+};
+
 // Close the DB after 5 minutes of inactivity
 setInterval(function() {
     if (db) {
@@ -78,15 +111,16 @@ router.get('/findpictures', function(req, res) {
             "where a.id = c.media_id and b.id = c.tag_id and a.mime_type = 'image/jpeg' and b.id in (" + tags + ") " +
             "group by a.id " +
             "having count(*) = " + tagCnt + ") " +
-        "order by a.search_date_begin desc, b.name";
+        "order by a.search_date_begin desc, a.id desc, b.name";
 
+    console.log("Searching for images having tag(s):",tags);
     getDB().all(sql, function(err, rows) {
         let data = {};
         if (err) {
-            console.log("findpictures SQL error:", err)
-            data.error=err;            
+            console.log("findpictures SQL error:", err);
+            data.error=err;
         } else {
-            console.log("sql query returned ",rows.length," rows for ",req.query);
+            console.log("SQL query returned ",rows.length," rows for ",req.query);
             data.Images = [];
             for (let i = 0;i < rows.length;) {
                 let image = {};
@@ -179,7 +213,7 @@ function returnResizedFile(image, scale, res) {
         image = "img/image-missing.jpg";
     }
 
-    sharp(image).resize(scale,scale, {kernel: sharp.kernel.nearest}).rotate().toBuffer(function(err, data) {
+    sharp(image).resize(scale, scale, {kernel: sharp.kernel.nearest}).crop(sharp.gravity.north).rotate().toBuffer(function(err, data) {
         if (err) {
             console.log("Unable to resize ", image, "error: ", err);
             returnFile("img/image-missing.jpg");

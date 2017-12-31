@@ -6,14 +6,10 @@
    <link rel="stylesheet" href="css/colorbox.css" type="text/css" media="screen" />
 
    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-   <!-- <script src="js/jquery.colorbox-min.js"></script> -->
    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery.colorbox/1.6.4/jquery.colorbox-min.js"></script>
    <script src="js/echo.js"></script>
    <script src="https://cdnjs.cloudflare.com/ajax/libs/masonry/3.3.2/masonry.pkgd.js"></script>
    
-   <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.0.0/imagesloaded.pkgd.min.js"></script> -->
-   <!-- <script type="text/javascript" src="js/jquery.endless-scroll.js"></script> -->
-
    <style type="text/css">
       body{ color: #fff; background-color: #000; font: 13px 'Lucida Grande', Verdana, sans-serif;  }
       html,body{ margin:0; padding:0; height:100%; border:none;overflow:hidden;}
@@ -49,8 +45,36 @@
 <SCRIPT language="JavaScript">
 var currentTags = "";
 
-$(document).ready(function()
-{
+console.logCopy = console.log.bind(console);
+
+console.log = function() {
+   // Timestamp to prepend
+   var timestamp = new Date().toJSON();
+
+   if (arguments.length) {
+      // True array copy so we can call .splice()
+      var args = Array.prototype.slice.call(arguments, 0);
+
+      // If there is a format string then... it must
+      // be a string
+      if (typeof arguments[0] === "string") {
+         // Prepend timestamp to the (possibly format) string
+         args[0] = "%o: " + arguments[0];
+
+         // Insert the timestamp where it has to be
+         args.splice(1, 0, timestamp);
+
+         // Log the whole array
+         this.logCopy.apply(this, args);
+      }
+      else { 
+         // "Normal" log
+         this.logCopy(timestamp, args);
+      }
+   }
+};
+
+$(document).ready(function() {
     $("#imageDiv").masonry({itemSelector: '.picDiv', columnWidth:100});
 
     echo.init({
@@ -69,16 +93,36 @@ function htmlSafe(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g,'&#39;');
 }
 
-function enableZoom()
-{
+function enableZoom() {
    $(".image").colorbox({rel:'image', photo: true,slideshow:true,slideshowSpeed:4000,slideshowAuto:false,width:"75%",height:"75%"});
    $(".image").colorbox({title:function () {
       return "<a href='" + this.href + "' target='_blank'><img src='img/fullscreen.png'/></a>" + "<br>"+this.title;
    }});
 }
 
-function loadPics(tags)
-{
+// Add the images to the page 100 at a time to make it more responsive
+function AddImages(Images, idx) {
+   var returnedPhotos = Images.length;
+   var imageHTML = "";
+
+   for (var i = idx;i < returnedPhotos && i < idx + 100;i++) {
+      var media_id = Images[i].media_id;
+      var caption = Images[i].caption;
+      imageHTML += addImage(media_id, caption);
+   }
+
+   $el = $(imageHTML);
+   $("#imageDiv").append($el).masonry('appended', $el);
+   enableZoom();
+
+   if (i < returnedPhotos) {
+      setTimeout(function(){AddImages(Images,i);}, 300);
+   }
+   else
+      console.log("Finished building image HTML",i);
+}
+
+function loadPics(tags) {
    var imageHTML = "";
 
    currentTags = tags;
@@ -86,33 +130,14 @@ function loadPics(tags)
    $("#imageDiv").masonry({itemSelector: '.picDiv', columnWidth:100});
 
    console.log("Loading pics for tags ",tags);
-   $.get('/api/findpictures',{tags: tags},function (data)
-   {
-     console.log("findpictures returned ",data)
-      var returnedPhotos = data.Images.length;
+   $.get('/api/findpictures',{tags: tags},function (data) {
+      console.log("findpictures returned ",data.Images.length, "images");
 
-      for (i = 0;i < returnedPhotos;i++)
-      {
-         var media_id = data.Images[i].media_id;
-         var caption = data.Images[i].caption;
-         imageHTML += addImage(media_id,caption);
-      }
-
-      $el = $(imageHTML);
-      $("#imageDiv").append($el).masonry('appended', $el);
-
-      $("#imageDiv img").error(function()
-      {
-         //console.log("Problem with image:",this);
-         $(this).parent().parent().remove();
-      });
-
-      enableZoom();
+      AddImages (data.Images, 0);
    }, "json");
 }
 
-function addImage(imgNbr, caption)
-{
+function addImage(imgNbr, caption) {
    var count = caption.match(/,/g);
    var scale = 1;
    if (count != null)
@@ -128,23 +153,19 @@ function addImage(imgNbr, caption)
    return imageHTML;
 }
 
-function changeTag()
-{
+function changeTag() {
    var i;
    var Str="";
    var Names="";
 
-   for (i=0;i < 1000;i++)
-   {
+   for (i=0;i < 1000;i++) {
       var checkName = "checkBox" + i;
       var checkCtrl = document.getElementById(checkName);
 
       if (checkCtrl == null)
          break;
 
-      if (checkCtrl.checked)
-      {
-        console.log("looking at ",checkCtrl.value)
+      if (checkCtrl.checked) {
          if (Str)
             Str += ",";
          var v = checkCtrl.value;
@@ -171,17 +192,13 @@ function changeTag()
       loadPics(Str);
 }
 
-function loadCategories()
-{
-   $.get('/api/getcategories',{buildcats: 1},function (data)
-   {
+function loadCategories() {
+   $.get('/api/getcategories',{buildcats: 1},function (data) {
       var lastParent = "";
       var listCode = "";
 
-      for (i = 0;i < data.length;i++)
-      {
-         if (data[i].parent != lastParent)
-         {
+      for (i = 0;i < data.length;i++) {
+         if (data[i].parent != lastParent) {
             lastParent = data[i].parent;
             listCode += "<span style=\"color:green\"><b>" + lastParent + "</b></span>" + "<br>";
          }
