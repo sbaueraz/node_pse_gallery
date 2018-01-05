@@ -45,6 +45,7 @@
 <SCRIPT language="JavaScript">
 var currentTags = "";
 var loadingTimer = 0;
+var echoTimer = 0;
 
 console.logCopy = console.log.bind(console);
 
@@ -85,8 +86,6 @@ $(document).ready(function() {
         unload: true
     });
 
-    setInterval(function () {echo.render();},750);
-
     loadCategories();
 });
 
@@ -126,6 +125,11 @@ function AddImages(Images, idx) {
 function loadPics(tags) {
    currentTags = tags;
 
+   if (echoTimer) {
+     clearInterval(echoTimer);
+     echoTimer = 0;
+   }
+
    $("#imageDiv").masonry({itemSelector: '.picDiv', columnWidth:100});
 
    console.log("Loading pics for tags ",tags);
@@ -134,6 +138,8 @@ function loadPics(tags) {
 
       AddImages (data.Images, 0);
    }, "json");
+
+   echoTimer = setInterval(function () {echo.render();},750);
 }
 
 function addImage(imgNbr, caption) {
@@ -215,7 +221,6 @@ function loadCategories() {
 </SCRIPT>
 </head>
 <body>
- </div>
  <div id="container">
    <div id="left" class="column">
      <div class="pages" id="categories"><b>Categories</b></div>
