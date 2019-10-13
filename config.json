@@ -1,8 +1,10 @@
 {
-	"database_file": "C:\\Users\\scott\\AppData\\Roaming\\Adobe\\Elements Organizer\\Catalogs\\catalog\\catalog.pse16db",
+	"database_file": "/mnt/drobo5n/Docs/scott/catalog.pse16db",
+	"default_drive": "/mnt/drobo5n",
 	"filename_replace": [
-		{"replace":"C:","with":"D:"},
-		{"replace":"D:","with":"d:"},
-		{"replace":"c:","with":"d:"}
+		{"replace":"d:","with":"/mnt/drobo5n"},
+		{"replace":"D:","with":"/mnt/drobo5n"},
+		{"replace":"//drobo5n/public","with":"/mnt/drobo5n"},
+		{"replace":"/image/","with":"/Image/"}
 	]
 }

@@ -155,7 +155,7 @@ router.get('/image', function(req, res) {
             if (fileName)
                 fileName = joinPaths(fileName, rows[0].full_filepath);
             else
-                fileName = rows[0].full_filepath;
+                fileName = joinPaths(config.default_drive, rows[0].full_filepath);
 
             returnFile(fileName,res);      
         }
@@ -178,7 +178,7 @@ router.get('/thumbnail', function(req, res) {
             if (fileName)
                 fileName = joinPaths(fileName, rows[0].full_filepath);
             else
-                fileName = rows[0].full_filepath;
+                fileName = joinPaths(config.default_drive, rows[0].full_filepath);
 
             returnResizedFile(fileName,req.query.scale,res);      
         }
