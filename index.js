@@ -56,12 +56,12 @@ console.log = function()
     }
 };
 
-// Close the DB after 5 minutes of inactivity
+// Close the DB after 2 minutes of inactivity
 setInterval(function() {
     if (db) {
         let now = new Date();
 
-        if (now - lastDBAccess > 5 * 60 * 1000) {
+        if (now - lastDBAccess > 2 * 60 * 1000) {
             console.log("Closing connection to database ",config.database_file);
             db.close();
             db = null;
@@ -190,6 +190,7 @@ router.get('/thumbnail', function(req, res) {
 });
 
 function returnFile(image, res) {
+    if (!res) return;
     if (!fs.existsSync(image)) {
         console.log("Unable to find: ", image)
         image = "img/image-missing.jpg";
@@ -213,7 +214,7 @@ function returnResizedFile(image, scale, res) {
         image = "img/image-missing.jpg";
     }
 
-    sharp(image).resize(scale, scale, {kernel: sharp.kernel.nearest}).crop(sharp.gravity.north).rotate().toBuffer(function(err, data) {
+    sharp(image,{ failOnError: false }).resize(scale, scale, {kernel: sharp.kernel.nearest}).rotate().toBuffer(function(err, data) {
         if (err) {
             console.log("Unable to resize ", image, "error: ", err);
             returnFile("img/image-missing.jpg");
@@ -227,7 +228,7 @@ function returnResizedFile(image, scale, res) {
 function getDB() {
     if (!db) {
         console.log("Creating connection to database ",config.database_file);
-        db = new sqlite3.Database(config.database_file);
+        db = new sqlite3.Database(config.database_file, sqlite3.OPEN_READONLY);
     }
 
     lastDBAccess = new Date();
@@ -268,3 +269,4 @@ function joinPaths(beg, end) {
 process.on('uncaughtException', function (err) {
     console.log('Caught exception: ', err);
 });
+
