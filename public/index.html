@@ -136,6 +136,12 @@ function loadPics(tags) {
    $.get('/api/findpictures',{tags: tags},function (data) {
       console.log("findpictures returned ",data.Images.length, "images");
 
+      $("#imageDiv").html("");
+      $("#imageDiv").data("masonry").reloadItems();
+      $("#imageDiv").removeAttr("style");
+      $("#imageDiv").height(0);
+      $("#container").scrollTop();
+
       AddImages (data.Images, 0);
    }, "json");
 

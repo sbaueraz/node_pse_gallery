@@ -1,5 +1,5 @@
 {
-	"database_file": "/mnt/drobo5n/Docs/scott/catalog.pse16db",
+	"database_file": "catalog.pse16db",
 	"default_drive": "/mnt/drobo5n",
 	"filename_replace": [
 		{"replace":"d:","with":"/mnt/drobo5n"},
